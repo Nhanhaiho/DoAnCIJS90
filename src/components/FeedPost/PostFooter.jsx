@@ -1,10 +1,23 @@
 import { Flex,Box,Text, InputGroup, InputRightElement,Button,Input } from '@chakra-ui/react'
 import React,{useState} from 'react'
 import { CommentLogo, NotificationsLogo, UnlikeLogo } from '../../asset/constant'
+import usePostCmt from '../../hooks/usePostCmt'
+import Comment from '../Comments/Comment'
+import useAuthStore from '../../store/authStore'
+import { format, render, cancel, register } from 'timeago.js';
 
-const PostFooter = ({username,isProfilePage}) => {
+const PostFooter = ({post,isProfilePage,creatorProfile}) => {
   const [like, setLike] = useState(false)
-  const [likeCount, setLikeCount] = useState(1000)
+  const [likeCount, setLikeCount] = useState(0)
+  const { isCommenting, handlePostComment } = usePostCmt()
+  const [comment, setComment] = useState(``)
+  const authUser =useAuthStore(state =>state.user)
+
+  const handleSubmitComment = async () => {
+    await handlePostComment(post.id, comment)
+    setComment('')
+  }
+
   const handleLike =() => {
     if (like) {
       setLike(false)
@@ -28,33 +41,47 @@ const PostFooter = ({username,isProfilePage}) => {
 
     </Flex>
     <Text fontWeight={600} fontSize={'sm'}>
-      {likeCount} likes
-    </Text>
+      {0} likes
+      </Text>
+      {isProfilePage && (
+        <Text fontSize='12' color={'gray'}>
+              Posted  {format(Date.now() - 11 * 1000 * 60 * 60)}
+        </Text>
+      )}
+
       {!isProfilePage && (
         <>
         <Text fontSize={'sm'} fontWeight={600}>
-      {username}{" "}
+      {creatorProfile?.username}{' '}
       <Text as='span' fontWeight={400}>
-        Felling bad
+        {post.caption}
       </Text>
     </Text>
-    <Text fontSize={'sm'} color={'gray'}>
-        View all {likeCount} comments
+          {post.comments.length > 0 && (
+            <Text fontSize={'sm'} color={'gray'} cursor={'pointer'}>
+        View all {post.comments.length} comments
     </Text>
-        </>
     )}
+        </>
+      )}
+      
     {/* the cmt input */}
-    <Flex alignItems={'center'} gap={2} justifyContent={'space-between'} w={'full'}>
+      {authUser && (
+         <Flex alignItems={'center'} gap={2} justifyContent={'space-between'} w={'full'}>
       <InputGroup>
-        <Input variant={'flushed'} placeholder="Add a cmt..." fontSize={14} fontWeight={'bold'}></Input>
+        <Input variant={'flushed'} placeholder="Add a cmt..." fontSize={14} fontWeight={'bold'} onChange={(e)=>setComment(e.target.value)} value={comment}></Input>
         <InputRightElement>
-          <Button fontSize={14} color={'blue.500'} fontWeight={600} cursor={'pointer'} _hover={{color:'white'}} bg={'transparent'}>
-            Post
+            <Button fontSize={14} color={'blue.500'} fontWeight={600} cursor={'pointer'} _hover={{ color: 'white' }} bg={'transparent'}
+              onClick={handleSubmitComment}
+              isLoading={isCommenting}
+            >
+            Post 
         </Button>
         </InputRightElement>
       </InputGroup>
     </Flex>
   
+        )}
     </Box>
    
    
